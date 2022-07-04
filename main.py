@@ -14,9 +14,9 @@ from functions import *
 from functions_map import *
 fig, ax = plt.subplots(figsize = (15,15))
 scale = 5
-nSources = 8
+nSources = 6
 x, y = [np.random.rand(1)*scale],[np.random.rand(1)*scale]
-color = [np.random.rand(1)]
+colors = [0,0,0,1]
 transparency = [np.ones(1)]
 prob_reproduce = 0.003
 prob_colorChange = [np.random.rand(1)*1e-2]
@@ -31,16 +31,16 @@ for i in range(nSources):
     source_coordinates = generate_valley()
     source_polygon = Path(source_coordinates)
     source_polygons.append(source_polygon)
-    energy_source_mapped = Polygon(source_coordinates, color='g', alpha = 0.15)
+    energy_source_mapped = Polygon(source_coordinates, color='g', alpha = 0.1)
     ax.add_patch(energy_source_mapped)
 
-sc = ax.scatter(x,y, c = color, cmap = 'copper', vmin = 0, vmax = 1)  
+sc = ax.scatter(x,y, color = colors, vmin = 0.0, vmax = 1.0)  
 ax.set_xticks([])
 ax.set_yticks([])
 plt.xlim(-10,10)
 plt.ylim(-10,10)
 
-d = {'xloc': x, 'yloc': y, 'colors': color, 'transparency': transparency,
+d = {'xloc': x, 'yloc': y, 'transparency': transparency,
      'prob_reproduce': prob_reproduce,
      'prob_colorChage': prob_colorChange,
      'prob_rest': prob_rest,
@@ -50,7 +50,11 @@ d = {'xloc': x, 'yloc': y, 'colors': color, 'transparency': transparency,
      'graze_efficiency': graze_efficiency,
      'max_energy': energy,
      'mutation': 0,
-     'base_metabolism': base_metabolism}
+     'base_metabolism': base_metabolism,
+     'red': colors[0],
+     'green': colors[1],
+     'blue': colors[2],
+     'energy_ratio': 1}
 
 df = pd.DataFrame(data = d)
 
@@ -65,8 +69,10 @@ def animate(i):
     df = terminate_mortals(df)
     
     sc.set_offsets(np.c_[df['xloc'],df['yloc']])
-    sc.set_array(df['colors'].astype('float'))
-    sc.set_alpha(df['energy_ratio'].astype('float'))
+    # sc.set_array(df['colors'].astype('float'))
+    # print(df[['red','green','blue','energy_ratio']].astype('float'))
+    sc.set_color(df[['red','green','blue']].astype('float'))
+    # sc.set_alpha(df['energy_ratio'].astype('float'))
     ax.set_title('Number of life: ' + str(len(df)))
 ani = matplotlib.animation.FuncAnimation(fig, animate, 
                                          frames = 2, interval = 2, repeat = True)

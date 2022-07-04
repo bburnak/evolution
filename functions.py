@@ -64,8 +64,15 @@ def calc_colors(df):
         DNA_PCA.fit(df[DNA_helix.mutating_genes])
         lifeRGB = DNA_PCA.transform(df[DNA_helix.mutating_genes])
         lifeRGB_norm = (lifeRGB - np.amin(lifeRGB,axis=0))/(np.amax(lifeRGB,axis=0) - np.amin(lifeRGB,axis=0))
-        df['colors'] = lifeRGB_norm[:,]
-        print(df)
+        # df['colors'] = lifeRGB_norm[:,]
+        # print(lifeRGB_norm[:,0])
+        # print(lifeRGB_norm[:,1])
+        # print(lifeRGB_norm[:,2])
+        df['red'] = lifeRGB_norm[:,0]
+        df['green'] = lifeRGB_norm[:,1]
+        df['blue'] = lifeRGB_norm[:,2]
+        # for i in range(len(df)):
+        #     print(df.iloc[i,'colors'])
     return df
     
 

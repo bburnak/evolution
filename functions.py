@@ -28,46 +28,45 @@ def calc_loc(df):
 
 def calc_reproduction(df):
     nLife = len(df)
-    # DNA_helix = DNA()
-    mutating_genes = ['prob_reproduce',
-                            'prob_rest',
-                            'athleticism',
-                            'graze_efficiency',
-                            'max_energy',
-                            'base_metabolism']
+    DNA_helix = DNA()
+    # mutating_genes = ['prob_reproduce',
+    #                         'prob_rest',
+    #                         'athleticism',
+    #                         'graze_efficiency',
+    #                         'max_energy',
+    #                         'base_metabolism']
     df['reproduce_realization'] = np.random.random(size = (nLife,1))
     
     df['will_reproduce'] = df['reproduce_realization'] < df['prob_reproduce']
-    print(df['will_reproduce'])
     nMutatingLife = len(df[df['will_reproduce']])
-    for gene in mutating_genes:
+    for gene in DNA_helix.mutating_genes:
         df.loc[df['will_reproduce'],'mutation'] = np.random.normal(1, scale = 0.005, size = (nMutatingLife,1))
         new_gene = df.loc[df['will_reproduce'], gene] * df.loc[df['will_reproduce'], 'mutation']
         df.loc[df['will_reproduce'], gene] = new_gene.clip(lower = 1e-8)
-    print(df[mutating_genes].median())
+    print(df[DNA_helix.mutating_genes].median())
     df = pd.concat([df,df[df['will_reproduce']]])
     return df
 
-def calc_colors(df):
-    nLife = len(df)
-    df['changeColor_realization'] = np.random.random(size = (nLife,1))
-    df['will_changeColor'] = df['changeColor_realization'] < df['prob_colorChage']
-    nChangeColor = len(df[df['will_changeColor']])
-    
-    df.loc[df['will_changeColor'], ['colors']] += np.random.normal(size = (nChangeColor,1))*1e-2
-    return df
-
 # def calc_colors(df):
-#     if 3 < len(df):
-#         DNA_helix = DNA()
-#         nRedDim = 3
-#         DNA_PCA = PCA(n_components=nRedDim)
-#         DNA_PCA.fit(df[DNA_helix.mutating_genes])
-#         lifeRGB = DNA_PCA.transform(df[DNA_helix.mutating_genes])
-#         lifeRGB_norm = (lifeRGB - np.amin(lifeRGB,axis=0))/(np.amax(lifeRGB,axis=0) - np.amin(lifeRGB,axis=0))
-#         df['colors'] = lifeRGB_norm[:,]
-#         print(df)
+#     nLife = len(df)
+#     df['changeColor_realization'] = np.random.random(size = (nLife,1))
+#     df['will_changeColor'] = df['changeColor_realization'] < df['prob_colorChage']
+#     nChangeColor = len(df[df['will_changeColor']])
+    
+#     df.loc[df['will_changeColor'], ['colors']] += np.random.normal(size = (nChangeColor,1))*1e-2
 #     return df
+
+def calc_colors(df):
+    if 3 < len(df):
+        DNA_helix = DNA()
+        nRedDim = 3
+        DNA_PCA = PCA(n_components=nRedDim)
+        DNA_PCA.fit(df[DNA_helix.mutating_genes])
+        lifeRGB = DNA_PCA.transform(df[DNA_helix.mutating_genes])
+        lifeRGB_norm = (lifeRGB - np.amin(lifeRGB,axis=0))/(np.amax(lifeRGB,axis=0) - np.amin(lifeRGB,axis=0))
+        df['colors'] = lifeRGB_norm[:,]
+        print(df)
+    return df
     
 
 def kill_outsiders(df):

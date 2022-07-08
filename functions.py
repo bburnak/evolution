@@ -4,6 +4,7 @@ from matplotlib.path import Path
 import numpy as np
 import pandas as pd
 from sklearn.decomposition import PCA
+from scipy.spatial.distance import pdist, squareform
 
 class DNA:
     def __init__(self):
@@ -12,7 +13,10 @@ class DNA:
                                'athleticism',
                                'graze_efficiency',
                                'max_energy',
-                               'base_metabolism']
+                               'base_metabolism',
+                               'reproduce_efficiency',
+                               'range_perception',
+                               'cancer_immunity']
 
 def calc_loc(df):
     nLife = len(df)
@@ -29,21 +33,16 @@ def calc_loc(df):
 def calc_reproduction(df):
     nLife = len(df)
     DNA_helix = DNA()
-    # mutating_genes = ['prob_reproduce',
-    #                         'prob_rest',
-    #                         'athleticism',
-    #                         'graze_efficiency',
-    #                         'max_energy',
-    #                         'base_metabolism']
     df['reproduce_realization'] = np.random.random(size = (nLife,1))
-    
     df['will_reproduce'] = df['reproduce_realization'] < df['prob_reproduce']
+    df.loc[df['will_reproduce'], 'energy'] = df.loc[df['will_reproduce'], 'energy']/2 * df.loc[df['will_reproduce'], 'reproduce_efficiency']
     nMutatingLife = len(df[df['will_reproduce']])
     for gene in DNA_helix.mutating_genes:
         df.loc[df['will_reproduce'],'mutation'] = np.random.normal(1, scale = 0.005, size = (nMutatingLife,1))
         new_gene = df.loc[df['will_reproduce'], gene] * df.loc[df['will_reproduce'], 'mutation']
         df.loc[df['will_reproduce'], gene] = new_gene.clip(lower = 1e-8)
     print(df[DNA_helix.mutating_genes].median())
+    print(df['energy'])
     df = pd.concat([df,df[df['will_reproduce']]])
     return df
 
@@ -94,10 +93,18 @@ def get_cancer(df):
     max_life = 100000
     nLife = len(df)
     cancer_realization = np.random.random(size = (nLife,1))
-    cancer_result_tmp = cancer_realization < nLife/max_life
-    cancer_result = [x for xs in cancer_result_tmp for x in xs]
-    df['will_die'] = (df['will_die']) | cancer_result
+    df['tmp'] = cancer_realization
+    cancer_result = (df['tmp'] < nLife/max_life)*(1-df['cancer_immunity'])
+    df['will_die'] = (df['will_die']) | (cancer_result)
     return df
+
+def get_nearest_life(df):
+    nLife = len(df)
+    if nLife > 3:
+        life_dist = squareform(pdist(df[['xloc','yloc']]))
+    return life_dist
+
+
 
 def terminate_mortals(df):
     df = df[~df['will_die']]

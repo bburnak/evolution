@@ -18,7 +18,7 @@ nSources = 12
 x, y = np.random.rand(1)*scale,np.random.rand(1)*scale
 colors = [0,0,0,1]
 transparency = [np.ones(1)]
-prob_reproduce = 0.003
+prob_reproduce = 0.005
 prob_colorChange = [np.random.rand(1)*1e-2]
 prob_rest = [0.8]
 energy = [100]
@@ -56,8 +56,12 @@ d = {'xloc': x, 'yloc': y, 'transparency': transparency,
      'blue': colors[2],
      'energy_ratio': 1,
      'reproduce_efficiency': 0.75,
-     'range_perception': 0.1,
-     'cancer_immunity': 0.1}
+     'range_perception': 0.2,
+     'cancer_immunity': 0.1,
+     'nearest_life_loc': 0 ,
+     'chase_tendency': 0.05,
+     'chase_xdir': 0,
+     'chase_ydir': 0}
 
 df = pd.DataFrame(data = d)
 
@@ -71,7 +75,7 @@ def animate(i):
     df = get_cancer(df)
     df = terminate_mortals(df)
     
-    # df = get_nearest_life(df)
+    # df = get_nearest_lives(df)
     
     sc.set_offsets(np.c_[df['xloc'],df['yloc']])
     # sc.set_array(df['colors'].astype('float'))

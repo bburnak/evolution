@@ -1,3 +1,4 @@
+import random
 import matplotlib.pyplot as plt
 import matplotlib.animation
 from matplotlib.path import Path
@@ -22,8 +23,14 @@ def calc_loc(df):
     nLife = len(df)
     df['state_realization_move'] = np.random.random(size = (nLife,1))
     df['resting'] = df['state_realization_move'] < df['prob_rest']
-    df['xdir'] = np.random.normal(0, size = (nLife,1))*1e-1
-    df['ydir'] = np.random.normal(0, size = (nLife,1))*1e-1
+    df = chase(df)
+    xvec = np.random.normal(0, size = (nLife,1))
+    yvec = np.random.normal(0, size = (nLife,1))
+    totalvec = np.sqrt(xvec**2 + yvec**2+1e-8)
+    df['rand_xdir'] = xvec/totalvec*1e-1
+    df['rand_ydir'] = yvec/totalvec*1e-1
+    df['xdir'] = df['rand_xdir'] + df['chase_xdir']
+    df['ydir'] = df['rand_ydir'] + df['chase_ydir']
     
     df.loc[~df['resting'],'xloc'] = df.loc[~df['resting'],'xloc'] + df.loc[~df['resting'],'xdir']
     df.loc[~df['resting'],'yloc'] = df.loc[~df['resting'],'yloc'] + df.loc[~df['resting'],'ydir']
@@ -41,7 +48,7 @@ def calc_reproduction(df):
         df.loc[df['will_reproduce'],'mutation'] = np.random.normal(1, scale = 0.005, size = (nMutatingLife,1))
         new_gene = df.loc[df['will_reproduce'], gene] * df.loc[df['will_reproduce'], 'mutation']
         df.loc[df['will_reproduce'], gene] = new_gene.clip(lower = 1e-8)
-    print(df[DNA_helix.mutating_genes].median())
+    # print(df[DNA_helix.mutating_genes].median())
     print(df['energy'])
     df = pd.concat([df,df[df['will_reproduce']]])
     return df
@@ -98,13 +105,33 @@ def get_cancer(df):
     df['will_die'] = (df['will_die']) | (cancer_result)
     return df
 
-def get_nearest_life(df):
+
+
+def get_nearest_lives(df):
     nLife = len(df)
-    if nLife > 3:
-        life_dist = squareform(pdist(df[['xloc','yloc']]))
-    return life_dist
+    life_dist = squareform(pdist(df[['xloc','yloc']]), checks = False)
+    np.fill_diagonal(life_dist, np.inf)
+    within_range = life_dist<[df['range_perception']]*nLife
+    df['within_range'] = [np.where(x == True) for x in within_range]
+    df['nearest_life_loc'] = np.argmin(life_dist, axis = 1)
+    return df
 
-
+def chase(df):
+    nLife = len(df)
+    if nLife > 10:
+        df = get_nearest_lives(df)
+        df['tmp'] = df['within_range'].str[0].str[0]    # gives index of a life within range
+        ischasing = ~df['tmp'].isna()
+        ischased = list(df.loc[ischasing, 'tmp'].astype('int'))
+        chase_xdir = df.iloc[ischased]['xloc'] - df.loc[ischasing, 'xloc']
+        chase_ydir = df.iloc[ischased]['yloc'] - df.loc[ischasing, 'yloc']
+        dist = np.sqrt(chase_xdir**2 + chase_ydir**2+1e-8)
+        df.loc[ischasing, 'chase_xdir'] = chase_xdir/dist*1e-1
+        df.loc[ischasing, 'chase_ydir'] = chase_ydir/dist*1e-1
+        nNonChasing = len(df.loc[~ischasing])
+        df.loc[~ischasing, 'chase_xdir'] = np.random.normal(0, size = (nNonChasing,1))*1e-1
+        df.loc[~ischasing, 'chase_ydir'] = np.random.normal(0, size = (nNonChasing,1))*1e-1
+    return df
 
 def terminate_mortals(df):
     df = df[~df['will_die']]

@@ -36,6 +36,7 @@ for i in range(nSources):
 sc = ax.scatter(x,y, c = colors, cmap = 'copper', vmin = 0.0, vmax = 1.0)  
 ax.set_xticks([])
 ax.set_yticks([])
+death_count = ax.text(-10,-11,'Death count: 0')
 plt.xlim(-10,10)
 plt.ylim(-10,10)
 
@@ -71,22 +72,25 @@ d = {'xloc': x, 'yloc': y, 'transparency': transparency,
 df = pd.DataFrame(data = d)
 
 def animate(i):
+    death_count = 0
     global df
     df = calc_loc(df)
     df = calc_reproduction(df)
     df = calc_colors(df)
-    df = handle_outsiders(df)
+    df, death_toll = handle_outsiders(df)
+    death_count += death_toll
     df = grazing(df)
     df = hunting(df)
     df = get_cancer(df)
-    df = terminate_mortals(df)
-    
+    df, death_toll = terminate_mortals(df)
+    death_count += death_toll
     
     sc.set_offsets(np.c_[df['xloc'],df['yloc']])
     sc.set_array(df['colors'].astype('float'))
     # sc.set_color(df[['red','green','blue']].astype('float'))
     sc.set_alpha(df['energy_ratio'].astype('float'))
     ax.set_title('Number of life: ' + str(len(df)))
+    # death_count.text('Death count: ' + str(int(death_count)))
 ani = matplotlib.animation.FuncAnimation(fig, animate, 
                                          frames = 2, interval = 1, repeat = True)
 plt.show()

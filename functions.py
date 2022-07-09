@@ -86,10 +86,11 @@ def calc_colors(df):
 
 def handle_outsiders(df):
     outsider_NE = (df['yloc']<-10) | (10<df['yloc'])
+    death_toll = len(outsider_NE)
     df = df[~outsider_NE]
     df.loc[df['xloc'] < -10, 'xloc'] = 10 + (10 + df.loc[df['xloc'] < -10, 'xloc'])
     df.loc[10 < df['xloc'], 'xloc'] = -10 + (df.loc[10 < df['xloc'], 'xloc'] - 10)
-    return df
+    return df, outsider_NE
 
 def enervate(df):
     dir_total = np.array(df.loc[~df['resting'],'xdir']) + np.array(df.loc[~df['resting'],'ydir'])
@@ -161,10 +162,13 @@ def hunting(df):
         ishunted = list(df.loc[ishunting, 'tmp'].astype('int'))
         df.loc[ishunting, 'energy'] += df.iloc[ishunted]['energy']*df.loc[ishunting, 'hunting_efficiency']
         df.loc[df['max_energy'] < df['energy'], 'energy'] = df.loc[df['max_energy'] < df['energy'], 'max_energy']
-        df.iloc[ishunted]['will_die'] = True
+        ishunted_boolean = [x in ishunted for x in range(nLife)]
+        df.loc[ishunted_boolean, 'will_die'] = True
+        
     return df
 
 def terminate_mortals(df):
+    death_toll = len(~df['will_die'])
     df = df[~df['will_die']]
-    return df
+    return df, death_toll
 
